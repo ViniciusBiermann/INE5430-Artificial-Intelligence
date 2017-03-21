@@ -1,0 +1,173 @@
+FUNCTION_BLOCK truck_driver // Block definition
+
+// Define input variables
+VAR_INPUT    
+ x : REAL;
+ y : REAL;
+ angle : REAL;
+END_VAR
+
+// Define output variable
+VAR_OUTPUT    
+ turn : REAL;
+END_VAR
+
+// Fuzzify input variable 'x'
+FUZZIFY x
+ TERM far_left   := (0.00, 1) (0.16, 0);
+ TERM mid_left   := (0.00, 0) (0.16, 1) (0.32, 0);
+ TERM near_left  := (0.16, 0) (0.32, 1) (0.5, 0);
+ TERM aligned := (0.32, 0) (0.50, 1) (0.68, 0);
+ TERM near_right := (0.5, 0) (0.68, 1) (0.84, 0);
+ TERM mid_right  := (0.68, 0) (0.84, 1) (1.00, 0);
+ TERM far_right  := (0.84, 0) (1.00, 1);
+END_FUZZIFY
+
+// Fuzzify input variable 'y'
+FUZZIFY y
+ TERM just_right := (0.00, 1) (0.50, 1) (0.80, 0);
+ TERM too_close := (0.50, 0) (0.80, 1) (1.00, 1);
+END_FUZZIFY
+
+// Fuzzify input variable 'angle'
+FUZZIFY angle
+ TERM zero   := (0.00, 1) (30.0, 0) (0330, 0) (0360, 1);
+ TERM acute   := (0.00, 0) (30.0, 1) (60.0, 0);
+ TERM sixty   := (30.0, 0) (60.0, 1) (90.0, 0);
+ TERM right   := (60.0, 0) (90.0, 1) (0120, 0);
+ TERM hun_twenty := (90.0, 0) (0120, 1) (0150, 0);
+ TERM obtuse  := (0120, 0) (0150, 1) (0180, 0);
+ TERM straight := (0150, 0) (0180, 1) (0210, 0);
+ TERM reflex  := (0180, 0) (0210, 1) (0330, 1) (0360, 0);
+END_FUZZIFY
+
+// Defuzzify output variable 'turn'
+DEFUZZIFY turn
+ TERM sharp_left       := (-1.0, 1) (-0.5, 0);
+ TERM medium_left      := (-1.0, 0) (-0.7, 1) (-0.4, 0);
+ TERM easy_left        := (-0.7, 0) (-0.4, 1) (0.0, 0);
+ TERM no_turn          := (-0.1, 0) (0.00, 1) (0.10, 0);
+ TERM easy_right       := (0.0, 0) (0.40, 1) (0.70, 0);
+ TERM medium_right     := (0.40, 0) (0.70, 1) (1.00, 0);
+ TERM sharp_right      := (0.70, 0) (1.00, 1);
+
+
+ METHOD : COG;  // Use 'Center Of Gravity' defuzzification method
+ DEFAULT := 0.0;  // Default value is 0 (if no rule activates defuzzifier)
+END_DEFUZZIFY
+
+
+// Inference rules
+
+RULEBLOCK No1
+ AND : MIN; // Use 'min' for 'and'
+ ACT : MIN; // Use 'min' activation method
+ ACCU : MAX; // Use 'max' accumulation method
+
+// Rules for angles 0 or 360
+ RULE 1: IF angle IS zero AND y IS too_close AND (x IS far_left OR x IS mid_left OR x IS near_left OR x IS aligned)  THEN
+    		turn IS sharp_left;
+ RULE 2: IF angle IS zero AND y IS too_close AND (x IS far_right OR x IS mid_right)  THEN
+    		turn IS no_turn;
+ RULE 3: IF angle IS zero AND y IS too_close AND x IS near_right  THEN
+    		turn IS sharp_right;
+ RULE 4: IF angle IS zero AND y IS just_right THEN
+    		turn IS sharp_right;
+
+// Rules for acute angles
+ RULE 5: IF angle IS acute AND x IS far_right AND y IS just_right THEN
+   			turn IS no_turn;
+ RULE 6: IF angle IS acute AND x IS NOT far_right AND y IS just_right THEN 
+   			turn IS sharp_right;
+ RULE 7: IF angle IS acute AND x IS far_right AND y IS too_close THEN
+   			turn IS sharp_left;
+ RULE 8: IF angle IS acute AND x IS mid_right AND y IS too_close THEN 
+   			turn IS medium_left;
+ RULE 9: IF angle IS acute AND x IS near_right AND y IS too_close THEN 
+   			turn IS medium_right;   
+ RULE 10: IF angle IS acute AND NOT (x IS far_right OR x IS mid_right OR x IS near_right) AND y IS too_close THEN 
+   			turn IS sharp_right;
+
+// Rules for 60 degree angle
+ RULE 11: IF angle IS sixty AND x IS far_right AND y IS just_right THEN
+   			turn IS medium_left;
+ RULE 12: IF angle IS sixty AND x IS mid_right AND y IS just_right THEN
+   			turn IS no_turn;
+ RULE 13: IF angle IS sixty AND NOT (x IS far_right OR x IS mid_right) AND y IS just_right THEN
+  			turn IS sharp_right;
+ RULE 14: IF angle IS sixty AND (x IS far_right OR x IS mid_right) AND y IS too_close THEN
+   			turn IS sharp_left;
+ RULE 15: IF angle IS sixty AND x IS near_right AND y IS too_close THEN
+   			turn IS easy_left;
+ RULE 16: IF angle IS sixty AND (x IS aligned OR x IS near_left) AND y IS too_close THEN
+   			turn IS sharp_right;
+ RULE 17: IF angle IS sixty AND (x IS far_left OR x IS mid_left) AND y IS too_close THEN
+   			turn IS sharp_right; 
+
+// Rules for 90 degree angle
+ RULE 18: IF angle IS right AND x IS aligned THEN
+   			turn IS no_turn;
+ RULE 19: IF angle IS right AND (x IS far_right OR x IS mid_right) AND y IS just_right THEN
+   			turn IS sharp_left;
+ RULE 20: IF angle IS right AND x IS near_right AND y IS just_right THEN
+   			turn IS medium_left;
+ RULE 21: IF angle IS right AND (x IS far_left OR x IS mid_left) AND y IS just_right THEN
+   			turn IS sharp_right;
+ RULE 22: IF angle IS right AND x IS near_left AND y IS just_right THEN
+   			turn IS medium_right;
+ RULE 23: IF angle IS right AND (x IS far_right OR x IS mid_right OR x IS near_right) AND y IS too_close THEN
+   			turn IS sharp_left;
+ RULE 24: IF angle IS right AND (x IS far_left OR x IS mid_left OR x IS near_left) AND y IS too_close THEN
+   			turn IS sharp_right;
+
+// Rules for 120 degree angle
+ RULE 25: IF angle IS hun_twenty AND x IS far_left AND y IS just_right THEN
+   			turn IS medium_right;
+ RULE 26: IF angle IS hun_twenty AND x IS mid_left AND y IS just_right THEN
+   			turn IS no_turn;
+ RULE 27: IF angle IS hun_twenty AND NOT (x IS far_left OR x IS mid_left) AND y IS just_right THEN
+   			turn IS sharp_left;
+ RULE 28: IF angle IS hun_twenty AND (x IS far_left OR x IS mid_left) AND y IS too_close THEN
+   			turn IS sharp_right;
+ RULE 29: IF angle IS hun_twenty AND x IS near_left AND y IS too_close THEN
+   			turn IS easy_right;
+ RULE 30: IF angle IS hun_twenty AND (x IS aligned OR x IS near_right) AND y IS too_close THEN
+   			turn IS sharp_left;
+ RULE 31: IF angle IS hun_twenty AND (x IS far_right OR x IS mid_right) AND y IS too_close THEN
+   			turn IS sharp_left; 
+
+// Rules for obtuse angles
+ RULE 32: IF angle IS obtuse AND x IS far_left AND y IS just_right THEN
+   			turn IS no_turn;
+ RULE 33: IF angle IS obtuse AND x IS NOT far_left AND y IS just_right THEN 
+   			turn IS sharp_left;
+ RULE 34: IF angle IS obtuse AND x IS far_left AND y IS too_close THEN
+   			turn IS sharp_right;
+ RULE 35: IF angle IS obtuse AND x IS mid_left AND y IS too_close THEN 
+   			turn IS medium_right;
+ RULE 36: IF angle IS obtuse AND x IS near_left AND y IS too_close THEN 
+   			turn IS medium_left;   
+ RULE 37: IF angle IS obtuse AND NOT (x IS far_left OR x IS mid_left OR x IS near_left) AND y IS too_close THEN 
+   			turn IS sharp_left;
+
+// Rules for 180 degree angle
+ RULE 38: IF angle IS straight AND y IS just_right THEN
+    		turn IS sharp_left;
+ RULE 39: IF angle IS straight AND y IS too_close AND (x IS far_right OR x IS mid_right OR x IS near_right OR x IS aligned)  THEN
+    		turn IS sharp_right;
+ RULE 40: IF angle IS straight AND y IS too_close AND (x IS far_left OR x IS mid_left)  THEN
+    		turn IS no_turn;
+ RULE 41: IF angle IS straight AND y IS too_close AND x IS near_left  THEN
+    		turn IS sharp_left;
+
+// Rules for reflex angles
+ RULE 42: IF angle IS reflex AND (x IS far_right OR x IS mid_right OR x IS near_right) THEN
+   			turn IS sharp_right;
+ RULE 43: IF angle IS reflex AND (x IS far_left OR x IS mid_left OR x IS near_left) THEN
+   			turn IS sharp_left;
+ RULE 44: IF angle IS reflex AND x IS aligned THEN
+   			turn IS sharp_right;
+ 
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
