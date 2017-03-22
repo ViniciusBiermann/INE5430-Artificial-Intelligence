@@ -1,0 +1,215 @@
+\documentclass{article}
+\usepackage[brazil]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{indentfirst}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper, left=20mm, right=20mm, top=20mm, bottom=20mm]{geometry}
+\usepackage[colorlinks, urlcolor=blue, citecolor=red]{hyperref}
+\usepackage{tikz, amsmath}
+\usetikzlibrary{positioning}
+
+
+\begin{document}
+
+\title{\textbf{Redes Bayesianas}}
+\author{
+    Lucas Ribeiro Neis\\
+     {\texttt{lucasrneis@gmail.com}}
+     \and
+     Vinícius Couto Biermann\\
+      {\texttt{viniciusbiermann@hotmail.com}}
+      \vspace{-50mm}
+}
+\date{Outubro 2016}
+
+\maketitle
+
+\section{Introdução}
+
+Foi proposto o tema de explicar avistamentos recentes de zumbis no campus da UFSC para que seja posto em prática o conhecimento em raciocínio probabilístico e redes Bayesianas. Foram dadas as seguintes variáveis aleatórias:
+
+\begin{itemize}
+    \item Mg = Um feitiço mágico foi lançado \{V, F\}
+    \item Vr = Há um surto viral de H1Z1 \{V, F\}
+    \item Hp = Você vê um Hipogrifo (uma criatura mágica) \{V, F\}
+    \item Zb = Você vê um Zumbi \{V, F\}
+    \item Tp = Você vê Viajantes do Tempo em ternos estranhos tentando conter o surto viral. \{V, F\}
+\end{itemize}
+
+Foi também fornecido uma lista de fatos e probabilidades conjuntas representados pela seguinte rede Bayesiana:
+
+\begin{center}
+\begin{tikzpicture}
+    \begin{scope}[every node/.style={circle, draw, align=center}]
+        \node (Hp) at (0, 0)    {$Hp$};
+        \node (Mg) at (1, 1.5)  {$Mg$};
+        \node (Zb) at (2, 0)    {$Zb$};
+        \node (Vr) at (3, 1.5)  {$Vr$};
+        \node (Tp) at (4, 0)    {$Tp$};
+    \end{scope}
+
+    \begin{scope}[>=latex, thick]
+        \draw[->] (Mg) -- (Hp);
+        \draw[->] (Mg) -- (Zb);
+        \draw[->] (Vr) -- (Zb);
+        \draw[->] (Vr) -- (Tp);
+    \end{scope}
+
+    \begin{scope}[every node/.style={node distance=2mm}]
+        \node[above left = of Mg] {
+            \begin{tabular}{c|c}
+                $Mg$ & 0,1      \\  \hline
+                $\neg Mg$ & 0.9  \\
+            \end{tabular}
+        };
+
+        \node[above right = of Vr] {
+            \begin{tabular}{c|c}
+                $Vr$ & 0,2      \\  \hline
+                $\neg Vr$  & 0.8 \\
+            \end{tabular}
+        };
+
+        \node[left = of Hp] {
+            \begin{tabular}{c|c|c}
+                          & $Hp$ & $\neg Hp$  \\ \hline
+                $Mg$      & 0.8      & 0.2     \\ \hline
+                $\neg Mg$ & 0.7      & 0.3      \\
+            \end{tabular}
+        };
+
+        \node[right = of Tp] {
+            \begin{tabular}{c|c|c}
+                          & $Tp$ & $\neg Tp$  \\ \hline
+                $Vr$      & 0.3      & 0.7     \\ \hline
+                $\neg Vr$ & 0.1      & 0.9      \\
+            \end{tabular}
+        };
+
+        \node[below = 2mm of Zb] {
+            \begin{tabular}{c|c|c|c}
+                          &           & $Zb$ & $\neg Zb$  \\ \hline
+                $Mg$      & $Vr$      & 0.6      & 0.4     \\ \hline
+                $Mg$      & $\neg Vr$ & 0.5      & 0.5      \\ \hline
+                $\neg Mg$ & $Vr$      & 0.4      & 0.6       \\ \hline
+                $\neg Mg$ & $\neg Vr$ & 0.01     & 0.99       \\
+            \end{tabular}
+        };
+    \end{scope}
+\end{tikzpicture}
+\end{center}
+
+\section{Questões}
+
+\begin{enumerate}
+    \item Qual é a probabilidade de não ver um Zumbi dado que um feitiço mágico não foi lançado e não há surto viral? \\
+        Conseguimos os valores diretamente da tabela de probabilidades de avistamentos de um Zumbi.
+        \begin{align*}
+            P(\neg Zb \mid \neg Mg \land \neg Vr) = 0,99 = 99\%
+        \end{align*}
+    
+    \item Qual a probabilidade do mundo estar no seguinte estado: $(Mg, Hp, Zb, Vr, Tp)$?
+    
+        \begin{align*}
+            P(Mg, Hp, Zb, Vr, Tp)&=P(Mg)*P(Vr)*P(Hp \mid Mg)*P(Tp \mid Vr)*P(Zb \mid Mg \land Vr) \\
+                                 &= 0,1*0,2*0,8*0,3*0,6 = 0,00288 \approx 0,288\%
+        \end{align*}
+    
+    \item Qual a probabilidade de ser ver um Zumbi?
+        \begin{align*}
+            P(Zb) =\ &P(Zb \mid Mg \land Vr)*P(Mg)*P(Vr)\ + \\
+                    &P(Zb \mid Mg \land \neg Vr)*P(Mg)*P(\neg Vr)\ + \\
+                    &P(Zb \mid \neg Mg \land Vr)*P(\neg Mg)*P(Vr)\ + \\
+                    &P(Zb \mid \neg Mg \land \neg Vr)*P(\neg Mg)*P(\neg Vr) \\
+                    =\ &0,6 * 0,1 * 0,2 + 0,5 * 0,1 * 0,8 + 0,4 * 0,9 * 0,2 + 0,01 * 0,9 * 0,8 \\
+                    =\ &0,012 + 0,04 + 0,072 + 0,0072 = 0,1312 \approx 13,1\%
+        \end{align*}
+    
+    \item Qual a probabilidade de ver um Zumbi dado que está havendo um surto viral?
+        \begin{align*}
+            P(Zb|Vr) &= P(Zb|Vr \land Mg)*P(Mg)+P(Zb|Vr \land \neg Mg)*P(\neg Mg) \\
+                     &= 0,6 * 0,1 + 0,4 * 0,9 = 0,06 + 0,36 = 0,42 = 42\%
+        \end{align*}
+    
+    \item Qual a probabilidade de ser ver um Hipogrifo dado que você conseguiu ver um Zumbi?
+        \begin{align*}
+            P(Hp \mid Zb) &= \frac{P(Hp, Mg, Zb)+P(Hp, \neg Mg, Zb)}{P(Zb)} \\
+                          &= \frac{P(Mg)*P(Hp \mid Mg)*P(Zb \mid Mg)+P(\neg Mg)*P(Hp \mid \neg Mg)*P(Zb \mid \neg Mg)}{P(Zb)} \\
+                          &= \frac{0,1*0,8*P(Zb \mid Mg)+0,9*0,7*P(Zb \mid \neg Mg)}{0,1312}
+        \end{align*}
+        
+        Para continuar precisamos saber as probabilidades de $P(Zb \mid Mg)$ e $P(Zb \mid \neg Mg)$.
+        
+        \begin{align*}
+            P(Zb \mid Mg) &= P(Zb \mid Mg \land Vr)*P(Vr)+P(Zb \mid Mg \land \neg Vr)*P(\neg Vr) \\
+                          &= 0,6 * 0,2 + 0,5 * 0,8 = 0,12 + 0,4 = 0,52 \\ 
+                          \\
+            P(Zb \mid \neg Mg) &= P(Zb \mid \neg Mg \land Vr)*P(Vr)+P(Zb \mid \neg Mg \land \neg Vr)*P(\neg Vr) \\
+                               &= 0,4 * 0,2 + 0,01 * 0,8 = 0,08 + 0,008 = 0,088
+        \end{align*}
+        
+        Podemos agora continuar na conta anterior substituindo os valores:
+        
+        \begin{align*}
+            P(Hp \mid Zb) &= \frac{0,1*0,8*0,52+0,9*0,7*0,088}{0,1312} \\
+                          &= \frac{0,0416+0,05544}{0,1312} \\
+                          &= \frac{0,09704}{0,1312} = 0,7396 \approx 74\%
+        \end{align*}
+    
+    \item Qual a probabilidade de se ver um Zumbi dado que você conseguiu ver um Hipogrifo?
+        \begin{align*}
+            P(Zb \mid Hp) &= \frac{(P(Zb, Mg, Vr, Hp) + P(Zb, \neg Mg, Vr, Hp) + P(Zb, Mg, \neg Vr, Hp) + P(Zb, \neg Mg, \neg Vr, Hp))}{ P(Hp)} \\         
+		                  &= \frac{(P(Mg) * P(Vr) * P(Hp \mid Mg) * P(Zb \mid Mg \land Vr)}{P(Hp)} \\ 
+		                  &+ \frac{(P(\neg Mg) * P(Vr) * P(Hp \mid \neg Mg) * P(Zb \mid \neg Mg \land Vr)}{P(Hp)} \\
+		                  &+ \frac{(P(Mg) * P(\neg Vr) * P(Hp \mid Mg) * P(Zb \mid Mg \land \neg Vr)}{P(Hp)} \\
+		                  &+ \frac{(P(\neg Mg) * P(\neg Vr) * P(Hp \mid \neg Mg) * P(Zb \mid \neg Mg \land \neg Vr)}{P(Hp)} \\
+		                  &= \frac{0,1 * 0,2 * 0,8 * 0,6 + 0,9 * 0,2 * 0,7 * 0,4 + 0,1 * 0,8 * 0,8 * 0,5 + 0,9 * 0,8 * 0,7 * 0,01}{P(Hp)}
+        \end{align*}
+
+        Agora precisamos saber qual a probabilidade de vermos um hipogrifo.
+
+        \begin{align*}
+            P(Hp) &= P(Hp \mid Mg) * P(Mg) + P(Hp \mid \neg Mg) * P(\neg Mg) \\
+                  &= 0,8 * 0,1 + 0,7 * 0,9 = 0,71\\
+        \end{align*}
+        Assim, podemos concluir:
+        
+        \begin{align*}
+            P(Zb \mid Hp) &= \frac{0,1 * 0,2 * 0,8 * 0,6 + 0,9 * 0,2 * 0,7 * 0,4 + 0,1 * 0,8 * 0,8 * 0,5 + 0,9 * 0,8 * 0,7 * 0,01}{0,71}\\
+                       &= \frac{0,0096 + 0,0504 + 0,032 + 0,00504}{0,71}\\
+                       &= \frac{0,9704}{0,71}
+                        = 0,136676056 \approx 13,67\% \approx 13,7\%
+        \end{align*}
+        
+    
+    \item Qual a probabilidade de se ver um Zumbi dado que você conseguiu ver um Hipogrifo e um Viajante do Tempo?
+    
+        \begin{align*}
+            P(Zb \mid Hp \land Tp) = &(P(Zb,Hp,Tp,Mg,Vr)+P(Zb,Hp,Tp,Mg,\neg Vr)\ + \\
+	                                 &P(Zb,Hp,Tp,\neg Mg,Vr)+P(Zb,Hp,Tp,\neg Mg,\neg Vr))\ /\ P(Hp \land Tp) \\
+	                                 \\
+	                               = &(P(Mg)*P(Vr)*P(Hp \mid Mg)*P(Tp \mid Vr)*P(Zb \mid Mg \land Vr)\ + \\
+	                                 &P(Mg)*P(\neg Vr)*P(Hp \mid Mg)*P(Tp \mid \neg Vr)*P(Zb \mid Mg \land \neg Vr)\ + \\
+	                                 &P(\neg Mg)*P(Vr)*P(Hp \mid \neg Mg)*P(Tp \mid Vr)*P(Zb \mid \neg Mg \land Vr)\ + \\
+	                                 &P(\neg Mg)*P(\neg Vr)*P(Hp \mid \neg Mg)*P(Tp \mid \neg Vr)*P(Zb \mid \neg Mg \land \neg Vr))\ /\ P(Hp \land Tp) \\
+	                                 \\
+	                               = &(0,1 * 0,2 * 0,8 * 0,3 * 0,6 + \\
+	                                 &0,1 * 0,8 * 0,8 * 0,1 * 0,5 + \\
+	                                 &0,9 * 0,2 * 0,7 * 0,3 * 0,4 + \\
+	                                 &0,9 * 0,8 * 0,7 * 0,1 * 0,01)\ /\ (P(Hp)*P(Tp)
+        \end{align*}
+        
+        Da questão anterior conseguimos o valor de $P(Hp)$, mas ainda temos que calcular o valor de $P(Tp)$ para finalizar o cálculo.
+        \begin{align*}
+            P(Tp) &= P(Tp \mid Vr) * P(Vr) + P(Tp \mid \neg Vr) * P(\neg Vr) \\
+                  &= 0,3 * 0,2 + 0,1 * 0,8  = 0,06 + 0,08 = 0,14
+        \end{align*}
+        Agora podemos terminar o cálculo anterior.
+        \begin{align*}
+            P(Zb \mid Hp \land Tp) &= \frac{0,00288+0,0032+0,01512+0,000504}{0,71*0,14}\\
+                                   &= \frac{0,021704}{0,0994} = 0,21835010 \approx 21,8\%
+        \end{align*}
+    
+\end{enumerate}
+
+\end{document}
